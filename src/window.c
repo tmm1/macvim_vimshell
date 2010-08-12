@@ -1112,7 +1112,7 @@ win_split_ins(size, flags, newwin, dir)
     if(wp->w_buffer->is_shell!=0)
     {
 	struct vim_shell_window *shell=wp->w_buffer->shell;
-	vim_shell_resize(shell, width, shell->size_y);
+	vim_shell_resize(shell, new_size, shell->size_y);
 	redraw_win_later(wp, CLEAR);
     }
 #endif

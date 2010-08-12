@@ -6233,7 +6233,7 @@ syntax_present(win)
     win_T	*win;
 {
 #ifdef FEAT_VIMSHELL
-    if(buf->is_shell!=0)
+    if(win->w_buffer->is_shell!=0)
 	return 0;
 #endif
     return (win->w_s->b_syn_patterns.ga_len != 0

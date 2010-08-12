@@ -11,6 +11,10 @@
 # include <Xm/Xm.h>
 #endif
 
+#ifdef FEAT_GUI_MACVIM
+# include <CoreFoundation/CoreFoundation.h>
+#endif
+
 #ifdef FEAT_GUI_ATHENA
 # include <X11/Intrinsic.h>
 # include <X11/StringDefs.h>

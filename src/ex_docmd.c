@@ -11360,7 +11360,11 @@ ex_vimshell(eap)
 	return;
     }
     curbuf->is_shell=1;
+#if defined(FEAT_GUI_GTK)
     curbuf->gtk_input_id=0;
+#elif defined(FEAT_GUI_MACVIM)
+    curbuf->fdref=NULL;
+#endif
 
     /*
      * start the shell

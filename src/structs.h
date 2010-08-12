@@ -1664,7 +1664,12 @@ struct file_buffer
 #ifdef FEAT_VIMSHELL
     char	is_shell;                /* (flag) Is this buffer a shell? (0 = false) */
     struct	vim_shell_window *shell; /* Pointer to the shell struct, or NULL */
+#if defined(FEAT_GUI_GTK)
     int		gtk_input_id;            /* GTK-input id returned by gdk_input_add, only for GUI */
+#elif defined(FEAT_GUI_MACVIM)
+    CFFileDescriptorRef	fdref;
+#endif
+
 #endif
 };
 

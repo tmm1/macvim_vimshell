@@ -321,6 +321,68 @@ gui_macvim_force_flush(void)
     [[MMBackend sharedInstance] flushQueue:YES];
 }
 
+#ifdef FEAT_VIMSHELL
+/*
+ * VIM-Shell callback, called when a shell file descriptor has data
+ * available.
+ */
+    static void
+vimshell_request_cb(
+    CFFileDescriptorRef fdref,
+    CFOptionFlags callBackTypes,
+    void *info)
+{
+    buf_T *buf;
+    int did_redraw=0;
+    int source_fd = CFFileDescriptorGetNativeDescriptor(fdref);
+
+    /*
+     * Search the right buffer.
+     */
+    for(buf=firstbuf; buf!=NULL; buf=buf->b_next)
+    {
+	if(buf->is_shell!=0 && buf->shell && buf->shell->fd_master == source_fd)
+	{
+	    int r;
+
+	    r=vim_shell_do_read_lowlevel(buf);
+	    if(r>did_redraw)
+		did_redraw=r;
+
+	    if(r==1 && updating_screen==FALSE)
+		redraw_buf_later(buf, VALID);
+	    else if(r==2)
+	    {
+		/*
+		 * Shell died, so remove the GTK-input
+		 * VIMSHELL TODO: this should really be happening inside vim_shell_delete
+		 */
+		CFRelease(buf->fdref);
+		buf->fdref=NULL;
+		fdref=NULL;
+		if(updating_screen==FALSE)
+		    redraw_buf_later(buf, CLEAR);
+	    }
+
+			CFRelease(fdref);
+			buf->fdref = NULL;
+	    //if (buf->fdref)
+	    //    CFFileDescriptorEnableCallBacks(buf->fdref, kCFFileDescriptorReadCallBack);
+	}
+    }
+
+    if(updating_screen==FALSE)
+    {
+	if(did_redraw==1)
+	    update_screen(VALID);
+	else if(did_redraw==2)
+	{
+	    update_screen(CLEAR);
+	    out_flush();
+	}
+    }
+}
+#endif
 
 /*
  * GUI input routine called by gui_wait_for_chars().  Waits for a character
@@ -337,6 +399,28 @@ gui_mch_wait_for_chars(int wtime)
     // NOTE! In all likelihood Vim will take a nap when waitForInput: is
     // called, so force a flush of the command queue here.
     [[MMBackend sharedInstance] flushQueue:YES];
+
+#ifdef FEAT_VIMSHELL
+    /*
+     * Go through all buffers, see if we have to add not yet added inputs
+     */
+    {
+	buf_T *buf;
+	for(buf=firstbuf; buf!=NULL; buf=buf->b_next)
+	{
+	    if(buf->is_shell!=0 && buf->shell && !buf->fdref)
+	    {
+                CFFileDescriptorRef fdref = CFFileDescriptorCreate(kCFAllocatorDefault, buf->shell->fd_master, false, vimshell_request_cb, NULL);
+                CFFileDescriptorEnableCallBacks(fdref, kCFFileDescriptorReadCallBack);
+                CFRunLoopSourceRef source = CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault, fdref, 0);
+                CFRunLoopAddSource(CFRunLoopGetMain(), source, kCFRunLoopDefaultMode);
+                CFRelease(source);
+
+                buf->fdref = fdref;
+	    }
+	}
+    }
+#endif
 
     return [[MMBackend sharedInstance] waitForInput:wtime];
 }
