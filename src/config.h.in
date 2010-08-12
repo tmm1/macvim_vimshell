@@ -428,3 +428,8 @@
 
 /* Define if fcntl()'s F_SETFD command knows about FD_CLOEXEC */
 #undef HAVE_FD_CLOEXEC
+
+/* VIMSHELL stuff */
+#undef HAVE_PTY_H
+#undef HAVE_LIBUTIL_H
+#undef HAVE_STDINT_H

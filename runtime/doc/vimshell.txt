@@ -1,0 +1,93 @@
+*vimshell.txt*   For Vim version 7.0.  Last change: 2006 Sep 2
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+The VIM-Shell                                            *vimshell*
+
+1. What is VIM-Shell?
+
+The VIM-shell is a extension for VIM, a very popular programmer's editor for
+many platforms, written by Bram Moolenaar et al. VIM features split windows,
+and this patch makes it possible to start shells in those windows. It is only
+available for POSIX systems like Linux, FreeBSD, OpenBSD, NetBSD and MacOS X.
+I don't think the Windows-VIM needs such a patch, because I think the command
+line there isn't really popular.
+
+==============================================================================
+2. How to use the VIM-Shell
+
+2.1 General concept: ":vimshell"
+
+The whole VIM-Shell functionality is hidden behind one single command:
+:vimshell.
+
+:vimshell[!] [params] tries to close your active buffer and creates a new one.
+This behaves exactly the same as the :enew command (see :help enew im VIM for
+details). If you have local modifications to your buffer, the command will be
+aborted (but you can override this by adding a ! at the end, in this case the
+active buffer will be dismissed in any case). The window containing this empty
+buffer is then converted to a VIM-Shell.
+
+:vimshell
+
+starts a VIM-Shell in your current window. I strongly suggest you open a new
+window before doing that. By default, without any parameters, /bin/sh will be
+spawned.
+
+:vimshell bash
+
+When called with parameters, VIM-Shell passes these parameters verbatim to
+execvp when starting a shell. Your current $PATH will be searched for the
+command.
+
+:vimshell irssi -n anonymous -c vienna.irc.at
+
+starts the textmode IRC client "irssi" with the abovementioned parameters.
+
+:vimshell mutt
+
+Never lose track of your e-mails while working in VIM!
+
+When you exit such a shell, or the program running in it terminates, the
+buffer will be converted back to a normal, empty VIM-buffer. The window will
+not be closed.
+
+2.2 Navigation
+
+When the currently active window is a VIM-Shell, every character entered gets
+routed to the shell, and no mapping expansion takes place. VIM doesn't get any
+notice of the characters that you type in a VIM-Shell.
+
+The big exception is Ctrl_W, which is passed through to VIM, so you can close
+the VIM-shell (Ctrl_W + c), change to another window, resize the window, etc.
+Key mappings
+
+Because I feel that opening up a window and then typing :vimshell is a bit
+cumbersome, I suggest you use the following key mappings in your .vimrc:
+
+	" VIM-Shell
+	" Ctrl_W e opens up a vimshell in a horizontally split window
+	" Ctrl_W E opens up a vimshell in a vertically split window
+	" The shell window will be auto closed after termination
+	nmap <C-W>e :new \| vimshell bash<CR>
+	nmap <C-W>E :vnew \| vimshell bash<CR>
+
+Just hitting Ctrl_W and e to drop a shell window in your VIM session is
+really, really comfortable :-)
+
+This is a small introduction on how to use the new features in your
+VIM-Shell-enabled VIM.
+
+==============================================================================
+3. Authorship
+
+The VIM-Shell was written in 2004, 2005, 2006 by Thomas Wana <thomas@wana.at>.
+Homepage: http://www.wana.at/vimshell/
+
+The VIM-Shell is published under the GNU GPL license (which is compatible with
+the VIM license). The copyright remains by the author.
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:

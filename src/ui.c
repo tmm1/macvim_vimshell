@@ -1756,6 +1756,64 @@ fill_input_buf(exit_on_error)
     len = 0;	/* to avoid gcc warning */
     for (try = 0; try < 100; ++try)
     {
+#  ifdef FEAT_VIMSHELL
+	{
+	    /*
+	     * When we use the VIM shell, we use select to look if there was
+	     * some activity on the shells. This is because the read below after
+	     * this block blocks, and this sucks.
+	     *
+	     * This loop is basically here so the shells can send updates while
+	     * we are waiting for the read(2) on the read_cmd_fd to become available.
+	     */
+#  ifndef HAVE_SELECT
+#error sorry - vimshell needs select. programmer is too lazy to write this with poll (at this time)
+#  endif
+	    fd_set rdfd;
+	    buf_T *buf;
+	    int maxfd, ret, done;
+
+	    done=0;
+	    while(!done)
+	    {
+		FD_ZERO(&rdfd);
+		FD_SET(read_cmd_fd, &rdfd);
+		maxfd=read_cmd_fd;
+
+		for(buf=firstbuf; buf!=NULL; buf=buf->b_next)
+		{
+		    if(buf->is_shell!=0)
+		    {
+			FD_SET(buf->shell->fd_master, &rdfd);
+			if( maxfd < buf->shell->fd_master)
+			    maxfd = buf->shell->fd_master;
+		    }
+		}
+
+		ret=select(maxfd+1, &rdfd, NULL, NULL, NULL);
+		if(ret<0)
+		{
+		    /*
+		     * we fsck'd something up ... let's just get out of here
+		     */
+		    done=1;
+		}
+		else if(ret>0)
+		{
+		    if(FD_ISSET(read_cmd_fd, &rdfd))
+		    {
+			/*
+			 * we have what we came here for. exit this loop
+			 * (but only after processing available shell reads)
+			 */
+			done=1;
+		    }
+
+		    vim_shell_do_read_select(rdfd);
+		}
+	    } // while(!done)
+	}
+#  endif
 #  ifdef VMS
 	len = vms_read(
 #  else

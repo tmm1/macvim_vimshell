@@ -625,6 +625,14 @@ cursor_valid()
     void
 validate_cursor()
 {
+#ifdef FEAT_VIMSHELL
+    /*
+     * The vimshell repositions its artificial cursor in vim_shell_redraw. Don't do the
+     * checks below.
+     */
+    if(curwin->w_buffer && curwin->w_buffer->is_shell!=0)
+	return;
+#endif
     check_cursor_moved(curwin);
     if ((curwin->w_valid & (VALID_WCOL|VALID_WROW)) != (VALID_WCOL|VALID_WROW))
 	curs_columns(TRUE);

@@ -92,13 +92,21 @@
 /*
  * The attributes that are actually active for writing to the screen.
  */
+#ifdef FEAT_VIMSHELL
+int		screen_attr = 0;
+#else
 static int	screen_attr = 0;
+#endif
 
 /*
  * Positioning the cursor is reduced by remembering the last position.
  * Mostly used by windgoto() and screen_char().
  */
+#ifdef FEAT_VIMSHELL
+int		screen_cur_row, screen_cur_col;	/* last known cursor position */
+#else
 static int	screen_cur_row, screen_cur_col;	/* last known cursor position */
+#endif
 
 #ifdef FEAT_SEARCH_EXTRA
 static match_T search_hl;	/* used for 'hlsearch' highlight matching */
@@ -143,7 +151,11 @@ static void init_search_hl __ARGS((win_T *wp));
 static void prepare_search_hl __ARGS((win_T *wp, linenr_T lnum));
 static void next_search_hl __ARGS((win_T *win, match_T *shl, linenr_T lnum, colnr_T mincol));
 #endif
+#ifdef FEAT_VIMSHELL
+void screen_start_highlight __ARGS((int attr));
+#else
 static void screen_start_highlight __ARGS((int attr));
+#endif
 static void screen_char __ARGS((unsigned off, int row, int col));
 #ifdef FEAT_MBYTE
 static void screen_char_2 __ARGS((unsigned off, int row, int col));
@@ -940,6 +952,7 @@ win_update(wp)
     }
 #endif
 
+
 #ifdef FEAT_SEARCH_EXTRA
     init_search_hl(wp);
 #endif
@@ -1563,6 +1576,7 @@ win_update(wp)
     win_foldinfo.fi_level = 0;
 #endif
 
+
     /*
      * Update all the window rows.
      */
@@ -1989,9 +2003,19 @@ win_update(wp)
 	else if (dollar_vcol == 0)
 	    wp->w_botline = lnum;
 
+#ifdef FEAT_VIMSHELL
+	/*
+	 * We don't want '~' to appear right in the middle of our shells ...
+	 */
+	if(wp->w_buffer->is_shell==0)
+	{
+#endif
 	/* make sure the rest of the screen is blank */
 	/* put '~'s on rows that aren't part of the file. */
 	win_draw_end(wp, '~', ' ', row, wp->w_height, HLF_AT);
+#ifdef FEAT_VIMSHELL
+	}
+#endif
     }
 
     /* Reset the type of redrawing required, the window has been updated. */
@@ -2038,6 +2062,18 @@ win_update(wp)
     /* restore got_int, unless CTRL-C was hit while redrawing */
     if (!got_int)
 	got_int = save_got_int;
+#endif
+
+#ifdef FEAT_VIMSHELL
+    /*
+     * If this window contains a shell, redraw the shell.
+     */
+    if(wp->w_buffer->is_shell != 0)
+    {
+	wp->w_buffer->shell->force_redraw=(type>=NOT_VALID ? 1 : 0);
+	vim_shell_redraw(wp->w_buffer->shell, wp);
+	return;
+    }
 #endif
 }
 
@@ -7220,7 +7256,11 @@ next_search_hl(win, shl, lnum, mincol)
 }
 #endif
 
+#ifdef FEAT_VIMSHELL
+      void
+#else
       static void
+#endif
 screen_start_highlight(attr)
       int	attr;
 {
@@ -7420,7 +7460,11 @@ reset_cterm_colors()
  * Put character ScreenLines["off"] on the screen at position "row" and "col",
  * using the attributes from ScreenAttrs["off"].
  */
+#ifdef FEAT_VIMSHELL
+    void
+#else
     static void
+#endif
 screen_char(off, row, col)
     unsigned	off;
     int		row;

@@ -1314,6 +1314,15 @@
 #endif
 
 /*
+ * The VIM-Shell. Only works on UNIX for now (more specifically,
+ * only Linux, *BSD and MacOS X, others not tested. Generally, if
+ * a system has a forkpty call, it should be working.)
+ */
+#if defined(FEAT_NORMAL) && (defined(UNIX) || defined(MACOS_X))
+#define FEAT_VIMSHELL
+#endif
+
+/*
  * +autochdir		'autochdir' option.
  */
 #if defined(FEAT_SUN_WORKSHOP) || defined(FEAT_NETBEANS_INTG) \

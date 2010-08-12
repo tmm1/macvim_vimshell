@@ -1031,6 +1031,10 @@ EX(CMD_visual,		"visual",	ex_edit,
 			BANG|FILE1|EDITCMD|ARGOPT|TRLBAR),
 EX(CMD_view,		"view",		ex_edit,
 			BANG|FILE1|EDITCMD|ARGOPT|TRLBAR),
+#ifdef FEAT_VIMSHELL
+EX(CMD_vimshell,	"vimshell",	ex_vimshell,
+			EXTRA|BANG|TRLBAR|CMDWIN),
+#endif
 EX(CMD_vimgrep,		"vimgrep",	ex_vimgrep,
 			RANGE|NOTADR|BANG|NEEDARG|EXTRA|NOTRLCOM|TRLBAR|XFILE),
 EX(CMD_vimgrepadd,	"vimgrepadd",	ex_vimgrep,

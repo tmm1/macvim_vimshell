@@ -3506,6 +3506,23 @@ if test "$GCC" = yes; then
 fi
 AC_SUBST(DEPEND_CFLAGS_FILTER)
 
+dnl ------------------------------------------------------------------
+dnl VIMSHELL configure thingies
+dnl needs -lutil, but not on MacOS X
+dnl The $MACOSX variable isn't set on the Mac I can use for testing, so we
+dnl have to use other means to find out if this is a Mac. uname for example.
+if test "$(uname)" = "Darwin"; then
+      LIBS="$LIBS"
+else
+      LIBS="$LIBS -lutil"
+fi
+AC_CHECK_HEADERS(pty.h libutil.h stdint.h)
+AC_CHECK_FUNCS(forkpty)
+if test $ac_cv_func_forkpty = no; then
+    AC_MSG_ERROR(vimshell needs forkpty - sorry.)
+fi
+dnl ------------------------------------------------------------------
+
 dnl write output files
 AC_OUTPUT(auto/config.mk:config.mk.in)
 

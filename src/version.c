@@ -634,6 +634,11 @@ static char *(features[]) =
 #else
 	"-vertsplit",
 #endif
+#ifdef FEAT_VIMSHELL
+	"+vimshell",
+#else
+	"-vimshell",
+#endif
 #ifdef FEAT_VIRTUALEDIT
 	"+virtualedit",
 #else

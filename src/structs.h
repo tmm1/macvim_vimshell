@@ -499,6 +499,10 @@ typedef struct
 
 typedef struct file_buffer buf_T;  /* forward declaration */
 
+#ifdef FEAT_VIMSHELL
+struct vim_shell_window;
+#endif
+
 /*
  * Simplistic hashing scheme to quickly locate the blocks in the used list.
  * 64 blocks are found directly (64 * 4K = 256K, most files are smaller).
@@ -1655,6 +1659,12 @@ struct file_buffer
     uint32_t    b_odb_server_id;    /* FourCC of the ODB server (0 if none) */
     void        *b_odb_token;       /* NSAppleEventDescriptor (optional) */
     char_u      *b_odb_fname;       /* Custom file name (optional) */
+#endif
+
+#ifdef FEAT_VIMSHELL
+    char	is_shell;                /* (flag) Is this buffer a shell? (0 = false) */
+    struct	vim_shell_window *shell; /* Pointer to the shell struct, or NULL */
+    int		gtk_input_id;            /* GTK-input id returned by gdk_input_add, only for GUI */
 #endif
 };
 

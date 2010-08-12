@@ -585,6 +585,19 @@ buf_freeall(buf, flags)
 #ifdef FEAT_TCL
     tcl_buffer_free(buf);
 #endif
+
+#ifdef FEAT_VIMSHELL
+    if(buf->is_shell!=0)
+    {
+	/*
+	 * It is guaranteed that this buffer isn't connected to a
+	 * window anymore, or else we'd not come up here. So we can
+	 * savely scrap the shell here.
+	 */
+	vim_shell_delete(buf);
+    }
+#endif
+
     ml_close(buf, TRUE);	    /* close and delete the memline/memfile */
     buf->b_ml.ml_line_count = 0;    /* no lines in buffer */
     if ((flags & BFA_KEEP_UNDO) == 0)

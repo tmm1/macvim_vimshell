@@ -149,6 +149,7 @@ static void	ex_colorscheme __ARGS((exarg_T *eap));
 static void	ex_quit __ARGS((exarg_T *eap));
 static void	ex_cquit __ARGS((exarg_T *eap));
 static void	ex_quit_all __ARGS((exarg_T *eap));
+static void	ex_vimshell __ARGS((exarg_T *eap));
 #ifdef FEAT_WINDOWS
 static void	ex_close __ARGS((exarg_T *eap));
 static void	ex_win_close __ARGS((int forceit, win_T *win, tabpage_T *tp));
@@ -11263,5 +11264,117 @@ ex_folddo(eap)
     /* Execute the command on the marked lines. */
     global_exe(eap->arg);
     ml_clearmarked();	   /* clear rest of the marks */
+}
+#endif
+
+#ifdef FEAT_VIMSHELL
+/*
+ * ":vimshell": creates an empty buffer in the current window and starts a
+ * VIM-Shell inside.
+ * ":vimshellac": same as "vimshell" but closes the window after the shell
+ * terminated (ac = "auto-close"). This is useful for redefinitions of 'Man'
+ * etc.
+ */
+    static void
+ex_vimshell(eap)
+    exarg_T	*eap;
+{
+    unsigned char *argv[50], argidx, *p;
+    unsigned char cmdline[500];
+    char cmdbuf[50];
+
+    if(curbuf->is_shell!=0)
+    {
+	emsg("VIMSHELL: current buffer is already a shell!");
+	return;
+    }
+
+    snprintf(cmdbuf, sizeof(cmdbuf), ":enew%s", eap->forceit==TRUE ? "!" : "");
+
+    /*
+     * Do a ":enew" command to get a new buffer in the current window.
+     * Also assures that we don't throw away any unsaved changes the user
+     * made to the previous buffer.
+     */
+    did_emsg=FALSE;
+    if(do_cmdline_cmd(cmdbuf)==FAIL || did_emsg==TRUE)
+    {
+	return;
+    }
+
+    /*
+     * Set buffer read only (the user can't write into it anyway, but just
+     * to make sure. We want to be able to close the buffer without any
+     * problems any time).
+     */
+    curbuf->b_p_ro=TRUE;
+
+    /*
+     * Parse command line arguments. If none given, default to '/bin/sh'
+     */
+    snprintf(cmdline, sizeof(cmdline), "%s", eap->arg);
+    p=cmdline;
+    argidx=0;
+    if(!strcmp(p, ""))
+    {
+	argv[0]="/bin/sh";
+    }
+    else
+    {
+	argv[argidx]=p;
+	do
+	{
+	    if(*p==' ')
+	    {
+		argidx++;
+		if(argidx+1 >= sizeof(argv)/sizeof(argv[0]))
+		{
+		    /*
+		     * Too many command line arguments, drop out
+		     */
+		    emsg("VIMSHELL: too many command line arguments");
+		    return;
+		}
+
+		/*
+		 * Convert all ' ' to \0
+		 */
+		for(;*p==' ';p++)
+		    *p=0;
+		if(*p!=0)
+		{
+		    argv[argidx]=p;
+		}
+	    }
+	} while(*p++);
+    }
+    argv[++argidx]=NULL;
+
+    /*
+     * Convert the current buffer into a shell window.
+     */
+    curbuf->shell=(struct vim_shell_window *)vim_shell_new(W_WIDTH(curwin), curwin->w_height);
+    if(curbuf->shell==NULL)
+    {
+	EMSG2("VIMSHELL: error creating a new shell: %s", vim_shell_strerror());
+	return;
+    }
+    curbuf->is_shell=1;
+    curbuf->gtk_input_id=0;
+
+    /*
+     * start the shell
+     */
+    if(vim_shell_start(curbuf->shell, (char **)argv)<0)
+    {
+	EMSG2("VIMSHELL: error starting the shell: %s", vim_shell_strerror());
+
+	vim_shell_delete(curbuf);
+	return;
+    }
+
+    /*
+     * we're up and running.
+     */
 }
 #endif

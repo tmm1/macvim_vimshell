@@ -192,6 +192,10 @@ main
      */
     mch_early_init();
 
+#ifdef FEAT_VIMSHELL
+    vim_shell_init();
+#endif
+
     /* Many variables are in "params" so that we can pass them to invoked
      * functions without a lot of arguments.  "argc" and "argv" are also
      * copied, so that they can be changed. */

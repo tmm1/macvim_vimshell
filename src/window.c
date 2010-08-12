@@ -119,6 +119,12 @@ do_window(nchar, Prenum, xchar)
 # define CHECK_CMDWIN
 #endif
 
+#ifdef FEAT_VIMSHELL
+# define CHECK_VIMSHELL if (curwin->w_buffer->is_shell != 0) { EMSG("VIMSHELL: command not available for shell windows"); break; }
+#else
+# define CHECK_VIMSHELL
+#endif
+
     switch (nchar)
     {
 /* split current window in two parts, horizontally */
@@ -486,6 +492,7 @@ newwindow:
 #if defined(FEAT_QUICKFIX)
     case '}':
 		CHECK_CMDWIN
+		CHECK_VIMSHELL
 		if (Prenum)
 		    g_do_tagpreview = Prenum;
 		else
@@ -495,6 +502,7 @@ newwindow:
     case ']':
     case Ctrl_RSB:
 		CHECK_CMDWIN
+		CHECK_VIMSHELL
 #ifdef FEAT_VISUAL
 		reset_VIsual_and_resel();	/* stop Visual mode */
 #endif
@@ -515,6 +523,7 @@ newwindow:
     case Ctrl_F:
 wingotofile:
 		CHECK_CMDWIN
+		CHECK_VIMSHELL
 
 		ptr = grab_file_name(Prenum1, &lnum);
 		if (ptr != NULL)
@@ -553,6 +562,7 @@ wingotofile:
     case 'd':			    /* Go to definition, using 'define' */
     case Ctrl_D:
 		CHECK_CMDWIN
+		CHECK_VIMSHELL
 		if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0)
 		    break;
 		find_pattern_in_path(ptr, 0, len, TRUE,
@@ -584,6 +594,7 @@ wingotofile:
     case 'g':
     case Ctrl_G:
 		CHECK_CMDWIN
+		CHECK_VIMSHELL
 #ifdef USE_ON_FLY_SCROLL
 		dont_scroll = TRUE;		/* disallow scrolling here */
 #endif
@@ -1097,6 +1108,14 @@ win_split_ins(size, flags, newwin, dir)
      */
     redraw_win_later(wp, NOT_VALID);
     wp->w_redr_status = TRUE;
+#ifdef FEAT_VIMSHELL
+    if(wp->w_buffer->is_shell!=0)
+    {
+	struct vim_shell_window *shell=wp->w_buffer->shell;
+	vim_shell_resize(shell, width, shell->size_y);
+	redraw_win_later(wp, CLEAR);
+    }
+#endif
 #ifdef FEAT_GUI_MACVIM
     /* The view may have moved, so clear all or display may get corrupted. */
     redraw_win_later(oldwin, CLEAR);
@@ -5610,6 +5629,15 @@ win_new_height(wp, height)
     wp->w_redr_status = TRUE;
 #endif
     invalidate_botline_win(wp);
+
+#ifdef FEAT_VIMSHELL
+    if(wp->w_buffer->is_shell!=0)
+    {
+	struct vim_shell_window *shell=wp->w_buffer->shell;
+	vim_shell_resize(shell, shell->size_x, height);
+	redraw_win_later(wp, CLEAR);
+    }
+#endif
 }
 
 #ifdef FEAT_VERTSPLIT

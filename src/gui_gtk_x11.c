@@ -5358,6 +5358,65 @@ sniff_request_cb(
 }
 #endif
 
+#ifdef FEAT_VIMSHELL
+/*
+ * VIM-Shell callback, called when a shell file descriptor has data
+ * available.
+ */
+    static void
+vimshell_request_cb(
+    gpointer	data,
+    gint	source_fd,
+    GdkInputCondition condition)
+{
+    buf_T *buf;
+    int did_redraw=0;
+
+    /*
+     * Search the right buffer.
+     */
+    for(buf=firstbuf;buf!=NULL;buf=buf->b_next)
+    {
+	if(buf->is_shell!=0 && buf->shell && buf->shell->fd_master==source_fd)
+	{
+	    int r;
+
+	    r=vim_shell_do_read_lowlevel(buf);
+	    if(r>did_redraw)
+		did_redraw=r;
+
+	    if(r==1 && updating_screen==FALSE)
+		redraw_buf_later(buf, VALID);
+	    else if(r==2)
+	    {
+		/*
+		 * Shell died, so remove the GTK-input
+		 * VIMSHELL TODO: this should really be happening inside vim_shell_delete
+		 */
+		gdk_input_remove(buf->gtk_input_id);
+		buf->gtk_input_id=0;
+		if(updating_screen==FALSE)
+		    redraw_buf_later(buf, CLEAR);
+	    }
+	}
+    }
+
+    if(updating_screen==FALSE)
+    {
+	if(did_redraw==1)
+	    update_screen(VALID);
+	else if(did_redraw==2)
+	{
+	    update_screen(CLEAR);
+	    out_flush();
+	}
+    }
+
+    if (gtk_main_level() > 0)
+	gtk_main_quit();
+}
+#endif
+
 /*
  * GUI input routine called by gui_wait_for_chars().  Waits for a character
  * from the keyboard.
@@ -5391,6 +5450,23 @@ gui_mch_wait_for_chars(long wtime)
 	sniff_input_id = gdk_input_add(fd_from_sniff,
 			       GDK_INPUT_READ, sniff_request_cb, NULL);
 	sniff_on = 1;
+    }
+#endif
+
+#ifdef FEAT_VIMSHELL
+    /*
+     * Go through all buffers, see if we have to add not yet added inputs
+     */
+    {
+	buf_T *buf;
+	for(buf=firstbuf;buf!=NULL;buf=buf->b_next)
+	{
+	    if(buf->is_shell!=0 && buf->shell && buf->gtk_input_id==0)
+	    {
+		buf->gtk_input_id=gdk_input_add(buf->shell->fd_master,
+			GDK_INPUT_READ, vimshell_request_cb, NULL);
+	    }
+	}
     }
 #endif
 

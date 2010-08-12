@@ -4844,7 +4844,7 @@ RealWaitForChar(fd, msec, check_for_gpm)
 # endif
 #endif
 #ifndef HAVE_SELECT
-	struct pollfd   fds[6];
+	struct pollfd   fds[50];
 	int		nfd;
 # ifdef FEAT_XCLIPBOARD
 	int		xterm_idx = -1;
@@ -4857,6 +4857,15 @@ RealWaitForChar(fd, msec, check_for_gpm)
 # endif
 # ifdef FEAT_NETBEANS_INTG
 	int		nb_idx = -1;
+# endif
+# ifdef FEAT_VIMSHELL
+	struct
+	{
+	    int idx;
+	    struct vim_shell_window *shell;
+	    buf_T *buffer;
+	}		vimshell_idxs[50];
+	int		vimshell_idx_cnt;
 # endif
 	int		towait = (int)msec;
 
@@ -4917,6 +4926,49 @@ RealWaitForChar(fd, msec, check_for_gpm)
 	    nfd++;
 	}
 #endif
+# ifdef FEAT_VIMSHELL
+	{
+	    /*
+	     * Loop through all windows and see if they contain vimshells.
+	     * If yes, add the master-fd to the list of polled fds.
+	     */
+	    memset(vimshell_idxs, 0, sizeof(vimshell_idxs));
+	    vimshell_idx_cnt=0;
+	    for(buf=firstbuf; buf!=NULL; buf=buf->b_next)
+	    {
+		buf_T *buf;
+		if(buf->is_shell!=0)
+		{
+		    vimshell_idxs[vimshell_idx_count].idx=nfd;
+		    vimshell_idxs[vimshell_idx_count].buffer=buf;
+		    vimshell_idxs[vimshell_idx_count].shell=buf->shell;
+
+		    /*
+		     * We will first run out of fds before we run out of
+		     * vimshell_idxs-slots, so no check here.
+		     */
+		    vimshell_idx_count++;
+
+		    if(buf->shell==NULL)
+		    {
+			// VIMSHELL TODO: error message here
+			continue;
+		    }
+		    fds[nfd].fd = buf->shell->fd_master;
+		    fds[nfd].events = POLLIN;
+		    nfd++;
+		    if(nfd>=sizeof(fds)/sizeof(fds[0]))
+		    {
+			/*
+			 * no more fds-slots left! aieeee
+			 */
+			// VIMSHELL TODO: issue a warning here or something
+			break;
+		    }
+		}
+	    }
+	}
+# endif
 
 	ret = poll(fds, nfd, towait);
 # ifdef FEAT_MZSCHEME
@@ -4977,6 +5029,38 @@ RealWaitForChar(fd, msec, check_for_gpm)
 	    --ret;
 	}
 #endif
+# ifdef FEAT_VIMSHELL
+#error "VIMSHELL: probably doesn't work with poll(), never tested, sorry (use select)"
+	{
+	    /*
+	     * See if any of the shell's fds have a read request ready
+	     * If yes, call the shell's read handler.
+	     */
+	    int i;
+	    int did_redraw=0;
+	    for(i=0;i<vimshell_idx_cnt;i++)
+	    {
+		if(fds[vimshell_idxs[i].idx].revents & POLLIN)
+		{
+		    if(vim_shell_read(vimshell_idxs[i].shell)<0)
+		    {
+			// VIMSHELL TODO: handle error here
+			continue;
+		    }
+
+		    redraw_buf_later(vimshell_idxs[i].buffer, NOT_VALID);
+
+		    did_redraw=1;
+		}
+		// VIMSHELL TODO: handle POLLHUP here too (shell terminated)
+	    }
+	    if(did_redraw==1)
+	    {
+		update_screen(NOT_VALID);
+		out_flush();
+	    }
+	}
+# endif
 
 
 #else /* HAVE_SELECT */
@@ -5066,6 +5150,25 @@ RealWaitForChar(fd, msec, check_for_gpm)
 		maxfd = nb_fd;
 	}
 #endif
+# ifdef FEAT_VIMSHELL
+	{
+	    /*
+	     * Loop through all windows and see if they contain vimshells.
+	     * If yes, add the master-fd to the list of fds
+	     */
+	    win_T *win;
+	    FOR_ALL_WINDOWS(win)
+	    {
+		buf_T *buf=win->w_buffer;
+		if(buf->is_shell!=0)
+		{
+		    FD_SET(buf->shell->fd_master, &rfds);
+		    if (maxfd < buf->shell->fd_master)
+			maxfd = buf->shell->fd_master;
+		}
+	    }
+	}
+# endif
 
 # ifdef OLD_VMS
 	/* Old VMS as v6.2 and older have broken select(). It waits more than
@@ -5150,6 +5253,16 @@ RealWaitForChar(fd, msec, check_for_gpm)
 	    --ret;
 	}
 #endif
+# ifdef FEAT_VIMSHELL
+	if((maxfd=vim_shell_do_read_select(rfds))!=0)
+	{
+	    ret-=maxfd;
+#  ifdef MAY_LOOP
+	    if (ret == 0)
+		finished = FALSE;   /* keep going if event was only one */
+#  endif
+	}
+# endif
 
 #endif /* HAVE_SELECT */
 

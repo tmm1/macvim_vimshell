@@ -6232,6 +6232,10 @@ ex_ownsyntax(eap)
 syntax_present(win)
     win_T	*win;
 {
+#ifdef FEAT_VIMSHELL
+    if(buf->is_shell!=0)
+	return 0;
+#endif
     return (win->w_s->b_syn_patterns.ga_len != 0
 	    || win->w_s->b_syn_clusters.ga_len != 0
 	    || win->w_s->b_keywtab.ht_used > 0

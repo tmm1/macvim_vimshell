@@ -648,10 +648,48 @@ normal_cmd(oap, toplevel)
     dont_scroll = FALSE;	/* allow scrolling here */
 #endif
 
+#ifdef FEAT_VIMSHELL
     /*
-     * Get the command character from the user.
+     * We reroute ALL characters to the shell, EXCEPT Ctrl_W, so all
+     * Window-Commands should still be working (not unimportant, think of
+     * leaving the window ...)
+     * VIMSHELL TODO: what about mouse commands, GUI commands, etc
      */
-    c = safe_vgetc();
+    if(curbuf->is_shell)
+    {
+	no_mapping++;
+	allow_keys++;
+	c = safe_vgetc();
+	no_mapping--;
+	allow_keys--;
+
+	if(curbuf->is_shell && c!=Ctrl_W)
+	{
+	    if(vim_shell_write(curbuf->shell, c)<0)
+	    {
+		    /*
+		     * The shell died, clean up
+		     */
+		    vim_shell_delete(curbuf);
+		    curbuf->is_shell=0;
+		    curbuf->b_p_ro=FALSE;
+
+		    redraw_later(CLEAR);
+		    update_screen(CLEAR);
+	    }
+	    return;
+	}
+    }
+    else
+    {
+	c = safe_vgetc();
+    }
+#else
+     /*
+      * Get the command character from the user.
+      */
+     c = safe_vgetc();
+#endif
     LANGMAP_ADJUST(c, TRUE);
 
 #ifdef FEAT_VISUAL
