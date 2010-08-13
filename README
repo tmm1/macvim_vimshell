@@ -1,0 +1,12 @@
+This is a branch of MacVim 7.3 (from http://github.com/b4winckler/macvim/tree/macvim73) with a version of the vimshell patch applied.
+It allows for a shell to be embedded inside a vim buffer: http://img.skitch.com/20100813-tqe3j411bjgfusbd413r2p8k1g.jpg
+
+The patch is based on Eugeni Dodonov's (g)vim7.2 patch (http://aur.archlinux.org/packages/vimshell/vimshell/) which is based on Thomas Wana's original work (http://www.wana.at/vimshell/).
+
+This branch is quite hacky, and lacks several key features:
+  - support for text selection via mouse
+  - support for copy/paste
+  - support for ctrl+c
+  - a scrollback buffer
+
+This code is available here in case someone wants to work on it. However, I would recommend you simply use ConqueTerm instead (http://code.google.com/p/conque)
