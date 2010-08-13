@@ -1704,6 +1704,68 @@ gui_write(s, len)
 		case 'f':	/* flash the window (visual bell) */
 		    gui_mch_flash(arg1 == 0 ? 20 : arg1);
 		    break;
+                case 'x':
+                    switch(arg1){
+                        case 0: // black
+                            gui.norm_pixel = 0;
+                            break;
+                        case 1: // red
+                            gui.norm_pixel = 0xcd0000;
+                            break;
+                        case 2: // green
+                            gui.norm_pixel = 0x00cd00;
+                            break;
+                        case 3: // yellow
+                            gui.norm_pixel = 0xcdcd00;
+                            break;
+                        case 4: // blue
+                            gui.norm_pixel = 0x0000ee;
+                            break;
+                        case 5: // magenta
+                            gui.norm_pixel = 0xcd00cd;
+                            break;
+                        case 6: // cyan
+                            gui.norm_pixel = 0x00cdcd;
+                            break;
+                        case 7: // white
+                            gui.norm_pixel = 0xe5e5e5;
+                            break;
+                        default:
+                            gui.norm_pixel = gui.def_norm_pixel;
+                    }
+                    //gui_mch_set_fg_color(gui.norm_pixel);
+                    break;
+                case 'y':
+                    switch(arg1){
+                        case 0: // black
+                            gui.back_pixel = 0;
+                            break;
+                        case 1: // red
+                            gui.back_pixel = 0xcd0000;
+                            break;
+                        case 2: // green
+                            gui.back_pixel = 0x00cd00;
+                            break;
+                        case 3: // yellow
+                            gui.back_pixel = 0xcdcd00;
+                            break;
+                        case 4: // blue
+                            gui.back_pixel = 0x0000ee;
+                            break;
+                        case 5: // magenta
+                            gui.back_pixel = 0xcd00cd;
+                            break;
+                        case 6: // cyan
+                            gui.back_pixel = 0x00cdcd;
+                            break;
+                        case 7: // white
+                            gui.back_pixel = 0xe5e5e5;
+                            break;
+                        default:
+                            gui.back_pixel = gui.def_back_pixel;
+                    }
+                    //gui_mch_set_bg_color(gui.back_pixel);
+                    break;
 		default:
 		    p = s + 1;	/* Skip the ESC */
 		    break;

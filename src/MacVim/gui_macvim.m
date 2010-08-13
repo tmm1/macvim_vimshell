@@ -357,19 +357,29 @@ vimshell_request_cb(
 		 * Shell died, so remove the GTK-input
 		 * VIMSHELL TODO: this should really be happening inside vim_shell_delete
 		 */
-		CFRelease(buf->fdref);
-		buf->fdref=NULL;
-		fdref=NULL;
+                //CFFileDescriptorInvalidate(fdref);
+                //CFRelease(fdref);
+                //buf->fdref=NULL;
+                //fdref=NULL;
 		if(updating_screen==FALSE)
 		    redraw_buf_later(buf, CLEAR);
 	    }
 
-			CFRelease(fdref);
-			buf->fdref = NULL;
-	    //if (buf->fdref)
-	    //    CFFileDescriptorEnableCallBacks(buf->fdref, kCFFileDescriptorReadCallBack);
+            // VIMSHELL TODO: we're always invalidating the fdref/source since I can't figure out why just calling
+            // CFFileDescriptorEnableCallbacks on the same fdref doesn't work
+            CFFileDescriptorInvalidate(fdref);
+            CFRelease(fdref);
+            buf->fdref = NULL;
+            CFRunLoopSourceInvalidate(buf->source);
+            CFRelease(buf->source);
+            buf->source = NULL;
+            fdref=NULL;
 	}
     }
+
+    // VIMSHELL TODO: this should work, but it doesn't =(
+    //if (fdref)
+    //    CFFileDescriptorEnableCallBacks(fdref, kCFFileDescriptorReadCallBack);
 
     if(updating_screen==FALSE)
     {
@@ -408,16 +418,17 @@ gui_mch_wait_for_chars(int wtime)
 	buf_T *buf;
 	for(buf=firstbuf; buf!=NULL; buf=buf->b_next)
 	{
-	    if(buf->is_shell!=0 && buf->shell && !buf->fdref)
-	    {
-                CFFileDescriptorRef fdref = CFFileDescriptorCreate(kCFAllocatorDefault, buf->shell->fd_master, false, vimshell_request_cb, NULL);
-                CFFileDescriptorEnableCallBacks(fdref, kCFFileDescriptorReadCallBack);
-                CFRunLoopSourceRef source = CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault, fdref, 0);
-                CFRunLoopAddSource(CFRunLoopGetMain(), source, kCFRunLoopDefaultMode);
-                CFRelease(source);
-
+            if(buf->is_shell!=0 && buf->shell && !buf->fdref)
+            {
+                CFFileDescriptorRef fdref = CFFileDescriptorCreate(NULL, buf->shell->fd_master, false, vimshell_request_cb, NULL);
                 buf->fdref = fdref;
-	    }
+
+                CFRunLoopSourceRef source = CFFileDescriptorCreateRunLoopSource(NULL, fdref, 0);
+                buf->source = source;
+                CFRunLoopAddSource(CFRunLoopGetCurrent(), source, kCFRunLoopDefaultMode);
+
+                CFFileDescriptorEnableCallBacks(fdref, kCFFileDescriptorReadCallBack);
+            }
 	}
     }
 #endif

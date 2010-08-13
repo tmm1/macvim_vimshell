@@ -663,7 +663,7 @@ normal_cmd(oap, toplevel)
 	no_mapping--;
 	allow_keys--;
 
-	if(curbuf->is_shell && c!=Ctrl_W)
+	if(curbuf->is_shell && c!=Ctrl_W && K_SECOND(c)!=KS_EXTRA)
 	{
 	    if(vim_shell_write(curbuf->shell, c)<0)
 	    {

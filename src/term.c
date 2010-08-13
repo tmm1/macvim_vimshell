@@ -189,6 +189,8 @@ static struct builtin_term builtin_termcaps[] =
     {(int)KS_UT,	"y"},
     {(int)KS_LE,	"\b"},		/* cursor-left = BS */
     {(int)KS_ND,	"\014"},	/* cursor-right = CTRL-L */
+    {(int)KS_CAF,	IF_EB("\033|%dx", ESC_STR "|%dx")},
+    {(int)KS_CAB,	IF_EB("\033|%dy", ESC_STR "|%dy")},
 # ifdef TERMINFO
     {(int)KS_CM,	IF_EB("\033|%p1%d;%p2%dM", ESC_STR "|%p1%d;%p2%dM")},
 # else

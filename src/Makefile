@@ -1511,8 +1511,10 @@ OBJ = \
 	$(SNIFF_OBJ) \
 	objects/tag.o \
 	objects/term.o \
+	objects/terminal.o \
 	objects/ui.o \
 	objects/undo.o \
+	objects/vim_shell.o \
 	objects/window.o \
 	$(GUI_OBJ) \
 	$(MZSCHEME_OBJ) \
@@ -2368,6 +2370,12 @@ objects/blowfish.o: blowfish.c
 
 objects/sha256.o: sha256.c
 	$(CCC) -o $@ sha256.c
+
+objects/vim_shell.o: vim_shell.c
+	$(CCC) -o $@ vim_shell.c
+
+objects/terminal.o: terminal.c
+	$(CCC) -o $@ terminal.c
 
 objects/buffer.o: buffer.c
 	$(CCC) -o $@ buffer.c

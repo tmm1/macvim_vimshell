@@ -1668,6 +1668,7 @@ struct file_buffer
     int		gtk_input_id;            /* GTK-input id returned by gdk_input_add, only for GUI */
 #elif defined(FEAT_GUI_MACVIM)
     CFFileDescriptorRef	fdref;
+    CFRunLoopSourceRef	source;
 #endif
 
 #endif

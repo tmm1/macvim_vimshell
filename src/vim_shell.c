@@ -736,7 +736,7 @@ void vim_shell_redraw(struct vim_shell_window *shell, win_T *win)
 					 * already in the right rendition mode ...
 					 */
 				}
-				else if(using_gui==0)
+				else// if(using_gui==0)
 				{
 					out_str_nf(T_ME);
 					term_is_bold=term_is_underline=term_is_negative=0;
@@ -762,16 +762,16 @@ void vim_shell_redraw(struct vim_shell_window *shell, win_T *win)
 				}
 
 				// colors
-				if(t_colors > 1 && using_gui==0)
+				//if(t_colors > 1 && using_gui==0)
 				{
 					// VIMSHELL TODO: not every terminal will understand these colors ...
 					// look at tag:cterm_normal_fg_color
-					if(last_set_fg!=fg_color)
+					//if(last_set_fg!=fg_color)
 					{
 						term_fg_color(fg_color);
 						last_set_fg=fg_color;
 					}
-					if(last_set_bg!=bg_color)
+					//if(last_set_bg!=bg_color)
 					{
 						term_bg_color(bg_color);
 						last_set_bg=bg_color;

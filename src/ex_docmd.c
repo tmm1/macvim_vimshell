@@ -11364,6 +11364,7 @@ ex_vimshell(eap)
     curbuf->gtk_input_id=0;
 #elif defined(FEAT_GUI_MACVIM)
     curbuf->fdref=NULL;
+    curbuf->source=NULL;
 #endif
 
     /*
