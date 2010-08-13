@@ -1465,6 +1465,7 @@ LINT_SRC = $(BASIC_SRC) $(GUI_SRC) $(HANGULIN_SRC) $(PYTHON_SRC) $(TCL_SRC) \
 
 OBJ = \
 	objects/buffer.o \
+	objects/blowfish.o \
 	objects/charset.o \
 	objects/diff.o \
 	objects/digraph.o \
@@ -1478,6 +1479,7 @@ OBJ = \
 	objects/fileio.o \
 	objects/fold.o \
 	objects/getchar.o \
+	objects/gui_beval.o \
 	objects/hardcopy.o \
 	objects/hashtab.o \
 	$(HANGULIN_OBJ) \
@@ -1503,6 +1505,7 @@ OBJ = \
 	objects/regexp.o \
 	objects/screen.o \
 	objects/search.o \
+	objects/sha256.o \
 	objects/spell.o \
 	objects/syntax.o \
 	$(SNIFF_OBJ) \
@@ -1537,6 +1540,7 @@ PRO_AUTO = \
 	fileio.pro \
 	fold.pro \
 	getchar.pro \
+	gui_beval.pro \
 	hardcopy.pro \
 	hashtab.pro \
 	hangulin.pro \
@@ -2359,6 +2363,12 @@ objects/MMBackend.o: MacVim/MMBackend.m
 objects/MacVim.o: MacVim/MacVim.m
 	$(CCC) -o $@ MacVim/MacVim.m
 
+objects/blowfish.o: blowfish.c
+	$(CCC) -o $@ blowfish.c
+
+objects/sha256.o: sha256.c
+	$(CCC) -o $@ sha256.c
+
 objects/buffer.o: buffer.c
 	$(CCC) -o $@ buffer.c
 
@@ -2533,8 +2543,8 @@ objects/os_beos.o: os_beos.c
 objects/os_qnx.o: os_qnx.c
 	$(CCC) -o $@ os_qnx.c
 
-objects/os_macosx.o: os_macosx.c
-	$(CCC) -o $@ os_macosx.c
+objects/os_macosx.o: os_macosx.m
+	$(CCC) -o $@ os_macosx.m
 
 objects/os_mac_conv.o: os_mac_conv.c
 	$(CCC) -o $@ os_mac_conv.c
